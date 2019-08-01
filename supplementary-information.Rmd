@@ -1,10 +1,14 @@
 ---
-title: "Supplementary Information"
+title: "Supplementary Information, Usage frequency and lexical class determine the evolution of kinship terms in Indo-European"
+author: "Rácz, Passmore, Sheard, and Jordan"
 output:
   html_document:
-    toc: true
-    toc_float: true
-    number_sections: true
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+always_allow_html: yes
 bibliography: bibliography.bib
 ---
 
@@ -25,6 +29,8 @@ library(coda)
 library(psych)
 
 setwd('~/Github/RaczPassmoreSheardJordan2019/')
+
+knitr::asis_output("U+041C")
 ```
 
 # Kinship data
