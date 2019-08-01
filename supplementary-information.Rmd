@@ -1,0 +1,489 @@
+---
+title: "Supplementary Information"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+bibliography: bibliography.bib
+---
+
+```{r include=FALSE, cache=FALSE}
+knitr::opts_chunk$set(fig.width=5, fig.height=5, fig.path='figures/', eval=TRUE, echo=FALSE, warning = FALSE, message=FALSE, tidy=TRUE)
+
+devtools::install_github('SamPassmore/bayestraitr') # our R package to work with BayesTraits
+
+library(tidyverse)
+library(lme4)
+library(effects)
+library(kableExtra)
+library(ggplot2)
+library(sjPlot)
+library(bayestraitr)
+library(purrr)
+library(coda)
+library(psych)
+
+setwd('~/Github/RaczPassmoreSheardJordan2019/')
+```
+
+# Kinship data
+
+```{r}
+corpora = read_csv('data/corpora-si.csv') # si versions of data files have -si preffix
+sd = read_csv('data/supp-data-si.csv')
+kinterms = sd$meaning %>% 
+  unique %>% 
+  sort %>% 
+  as.character
+nlang = sd$language %>% 
+  unique %>% 
+  length
+ncorpora = sd$corpus %>% 
+  unique %>% 
+  length
+nlangfreq = sd %>% 
+  filter(!is.na(corpus)) %>% 
+  select(language) %>%
+  unique %>% 
+  nrow
+```
+
+We collected kin terms from `r nlang` languages for the following relations: `r kinterms`, collected from a combination of native speakers, ethnographies, and dictionaries in our ['Kinbank' database](https://excd.org/research-activities/kinbank/). Initially, the analyses used a broader set of kinship terms (e.g. FB, FZ), however we restricted the sample to form a comparable set of word frequencies. This is because most Indo-European languages do not have separate terms for e.g.\ MZD and MBD and separate terms for e.g.\ BW are exceedingly rare (both across languages as types and within languages as token). We have not included _husband_ and _wife_, because these are often synonymous with _man_ and _woman_, respectively.
+
+Frequency data were collected from `r ncorpora` corpora in `r nlangfreq` languages in three corpus types: spoken, written, and web-crawled. The list of corpora is in Table 1 below.
+
+```{r}
+corpora %>% 
+  mutate(ref = paste('[@', bibtex, ']', sep = '')) %>% 
+  select(language,corpus.name,ref) %>%
+  kable('html', col.names = c('Language', 'Corpus name', 'Reference'), caption = 'Table S1: Source of frequency data (source of words is Kinbank)') %>% 
+  kable_styling(full_width = FALSE)
+```
+
+The analysis uses one term per language per kinterm. If it arises that a langauge has multiple words for a particular kinterm, we use which ever was more frequent in the corpus data. In the case where a language has multiple words for a single kinterm, and we do not have access to frequency data, we rely on expert judgement to select a term. 
+
+## Supplementary data table
+
+See the supplementary data csv file for the raw data used in this study.
+
+#### Column description:
+
+```{r echo = FALSE}
+cn = colnames(sd)
+cn = cn[!cn %in% c('word.type')]
+cn_description = c(
+  "Code used for kinterm, see TS1 for a description",
+  "Common name for each language",
+  "Words used in the analysis",
+  "Cognates as determined by lingpy, used as a first pass",
+  "Cognates reviewed and corrected by expert reviewers, used in analysis",
+  "Frequency of each term in the given corpus",
+  "Total size of the corpus",
+  "Type of corpus used (either web, written, or spoken)",
+  "Name of the corpus",
+  "States",
+  "Taxa label in phylogeny",
+  "Glottocode",
+  "Standard deviation for the global rate of replacement",
+  "Mean global rate of replacement",
+  "Source of term (see source SM)"
+)
+
+data.frame(cn, cn_description) %>%
+  kable(col.names = c("Column name", "Description"), format = 'html',
+        caption = "Table S2: Supplementary table column descriptions") %>%
+  kable_styling(full_width = FALSE)
+```
+
+## Data summary
+
+We estimate rate of replacement and compare it with frequency of use for ten types of kin relations. 
+Here we use MB, MZ, MZS, and MZD as shorthand for broader terms (uncle, aunt, male cousin, and female cousin, respectively). This is because commonly used terms in this set of languages do not distinguish terms according to the parent's gender.
+
+Below is a table indicating the shorthand used for each kinterm, the number of languages for which we have data, and the number of states (or cognates) for that term. 
+
+We collected terms for a superset of the languages from which frequency data is available in order to have a more robust estimate of rate of replacement for each term.
+
+```{r echo = FALSE}
+kc_order = c("F", "M", "S", "D", "B", "Z", "MB", "MZ", "MZS", "MZD")
+sd$kincode = factor(sd$meaning, 
+                       levels = kc_order)
+
+t = sd %>%
+  group_by(kincode) %>%
+  summarise(language.count = length(unique(language)), states = length(unique(expert.cognate)))
+t$description = c("Father", "Mother", "Son", "Daughter", "Brother", "Sister", 
+                  "Mother's brother (uncle)", "Mother's sister (aunt)", 
+                  "Mother's sister's daughter (female cousin)", "Mother's sisters son (male cousin)")
+t = t[,c(1,4,2,3)]
+
+kable(t, col.names = c("Kinterm", "Description", "No. languages", "States"),
+      "html", caption = "Table S3: Each kinterm used, with counts for the number of
+      languages we have data for and the number of cognates across our sample") %>%
+  kable_styling(full_width = FALSE)
+
+min.lang = min(t$language.count)
+max.lang = max(t$language.count)
+
+```
+
+
+
+## Frequency data
+
+Below are bar graphs of term frequency by langauge, across corpora types (web, written, or spoken).
+
+```{r echo = FALSE, fig.align='center', fig.width=10, fig.height=15}
+sd$corpus.type = factor(sd$corpora.type, levels = c("web", "written", "spoken"))
+
+# d2 = d %>%
+#   group_by(kincode, language) %>%
+#   arrange(desc(word.count)) %>%
+#   slice(which.min(corpus.type))
+
+sd2 = sd %>%
+  group_by(kincode, language, corpus.type) %>%
+  slice(which.max(word.count))
+
+df_freq = subset(sd2, subset = sd2$kincode %in% kc_order)
+
+distance = data.frame(kincode = unique(df_freq$kincode), 
+                      distance = factor(c(1,1,1,1,1,1,2,2,3,3), levels = 1:3))
+
+language_order = c(
+  "English", "German", "Danish", "Dutch", "Swedish", "Norwegian", ## Germanic
+  "Spanish", "Catalan", "Portuguese", "French", "Italian", "Romanian",  ## Latin
+  "Czech", "Polish", "Serbian", "Russian", "Bulgarian", "Croatian",  ## Slavic 
+  "Greek", "Albanian", "Icelandic"  ## Other
+)
+
+df_freq = left_join(df_freq, distance, by = "kincode")
+
+df_freq$language = factor(df_freq$language, levels = language_order)
+df_freq$kincode = factor(df_freq$kincode, levels = kc_order)
+df_freq = df_freq %>%
+  mutate(fp20m = (2 * 10^7) * (word.count / corpora.size))
+
+#pdf('figures/supp-figure-1.pdf')
+ggplot(data=df_freq %>% filter(corpus.type == "web")) + 
+  geom_col(aes(x = kincode, y = log(fp20m), fill = factor(distance))) + 
+  facet_wrap(~ language, dir="v", ncol = 2) + 
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = -90, hjust = 0, size = 10),
+        axis.ticks.x=element_blank(), 
+        legend.position="none") +
+  ylab("log(frequency per 20 million)") +
+  ylim(0, 13) + 
+  ggtitle('Figure S1: Web frequencies of terms across languages')
+#dev.off()
+
+ggplot(data=df_freq %>% filter(corpus.type == "written")) + 
+  geom_col(aes(x = kincode, y = log(fp20m), fill = factor(distance))) + 
+  facet_wrap(~ language, dir="v", ncol = 2) + 
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = -90, hjust = 0, size = 10),
+        axis.ticks.x=element_blank(), 
+        legend.position="none") +
+  ylab("log(frequency per 20 million)") +
+  ylim(0, 13)  + 
+  ggtitle('Figure S2: Written frequencies of terms across languages')
+
+ggplot(data=df_freq %>% filter(corpus.type == "spoken")) + 
+  geom_col(aes(x = kincode, y = log(fp20m), fill = factor(distance))) + 
+  facet_wrap(~ language, dir="v", nrow = 6) + 
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(angle = -90, hjust = 0, size = 10),
+        axis.ticks.x=element_blank(), 
+        legend.position="none") +
+  ylab("log(frequency per 20 million)") +
+  ylim(0, 13) + 
+  ggtitle('Figure S3: Spoken frequencies of terms across languages')
+```
+
+# Cognate data
+
+We generated cognate classes using the Indo-European Etymological Dictionary [@buck], LingPy [@list_lingpy._2018], and a panel of volunteer experts, recruited on Linguist List (all faults remain ours). All terms were automatically transcribed into the Speech Assessment Methods Phonetic Alphabet (SAMPA) through LingPy's `uni2sampa` function. Cognates were automatically allocated using LingPy's `cluster` function. Using the cognate-coded Swadesh list (subset to those languages for which we also have kinterms), we tested the appropriateness of edit distance, SCA, and turchin algorithms, alongside Phonemic and Phonetic transcriptions for cognate detection in our data, following the code examples from [Lingpy.org](http://lingpy.org/examples.html). The F-score was highest for the edit-distance algorithm with a 0.4 threshold (see table S4) [@list_lingpy._2018]. We then manually adjusted the results, followed by expert review which resulted in minor changes. Automatic decisions and the corrections are available in the supplementary data file.
+
+```{r results_table }
+cognate_detection = read.csv('data/cognatedetection-results-si.csv') 
+
+kable(cognate_detection, 
+      "html", caption = "Table S4: Precision, recall, & F-score for various LingPy cognate detection algorithms and their threshold settings.") %>%
+  kable_styling(full_width = FALSE)
+```
+
+
+## Phylogeny
+
+We used 1000 phylogenies from the most recent Bayesian posterior of Indo-European phylogenies [@bouckaert_mapping_2012]. Trees in the sample are rooted. Branch lengths are given in years and derived from statistical and historical calibration. The Indo-European posterior used has an approximate age of 8,700 years. Trees initially have 111 taxa, and these were pruned down for each kinterm dependent on available data. Counts for taxa for each kinterm can be found in table S3. By using a sample of likely phyloygenies and through using a Bayesian approach, we account for the phylogenetic uncertainty.
+
+## Rates of change
+
+Table S3 shows the number of languages and states used to estimate rate of change for each kinterm. Each language is linked to a taxon in the Indo-European phylogeny. Following the methods in @pagel_deep_2018 we use BayesTraits version 3.0.1 to implement a Bayesian MCMC approach to estimate the instantaneous global rate of change for each kin-term through Q-matrix normalisation. Probabilities of frequency were scaled to represent the empirical frequencies. We used a stepping-stone sampler, using 100 stones for 1000 iterations each. MCMC chains ran for a total of 10,010,000 iterations, with a burn-in of 10,000, sampling every 1000 iterations. This left a posterior sample of 10,000 iterations, which is approximately 10 samples per tree. To make the rates comparable to Pagel et al., we scale instantaneous rates to change per 10,000 years.
+
+Each analysis was run 3 times to ensure the MCMC chain converged. Tables S5 - S14 display the marginal log-likelihood for each MCMC run, the mean global rate of change for each run, and the average across the three runs. For each kinterm, we also used the Gelman-Rubin diagnostic test for convergence [@gelman1992inference]. This tests for MCMC convergence between multiple chains by analysing the differences between them. By estimating a 'potential scale reduction factor', which when multiplying across chains would remove the differences, we can quantify the differences between chains (a scale reduction factor 1 indicating no change needed). A rule of thumb suggests a point estimates of less than 1.1 is sufficient to claim convergence, and ensuring upper limits are also around these limits.  
+
+```{r mcmc.diagnostics, eval = TRUE, results='asis'}
+# get diagnostics and averages
+# harmonic SD
+harmonic.sd <- function(x)sqrt((mean(1/x))^(-4)*var(1/x)/length(x))
+
+log.files = list.files('data/bayestraits-output/', pattern = "*.Log.txt", 
+                       full.names = TRUE)
+stone.files = list.files('data/bayestraits-output/', pattern = "*.Stones.txt", 
+                         full.names = TRUE)
+
+fs = log.files %>% 
+  basename() %>%
+  str_extract('[A-Z]{1,3}') %>% 
+  unique() 
+
+titles = fs %>% 
+  paste0("Table S", 5:14, ": ", .)
+
+gelman_diag = list()
+average_result = list()
+for(i in seq_along(titles)){
+  idx = str_detect(
+    log.files, paste0("_", fs[i], "_")
+  )
+  
+  logs = map(log.files[idx], bt_read.log)
+  stones = map(stone.files[idx], bt_read.stones)
+  
+  c123 = mcmc.list(as.mcmc(logs[[1]]$Lh),
+                  as.mcmc(logs[[2]]$Lh),
+                  as.mcmc(logs[[3]]$Lh))                            
+  
+  gelman_diag[[i]] = gelman.diag(c123)[[1]][1,]
+  
+  lh = map(stones, "marginal_likelihood") %>% 
+    unlist(stones) %>% 
+    round(., 3)
+  global.rates = map(logs, function(s){
+      harmonic.mean(s$`Global Rate`)
+  }) %>% unlist()
+  
+  rates.sdhm = map(logs, function(s){
+      harmonic.sd(s$`Global Rate`)
+  }) %>% unlist()
+  
+  
+  t = cbind(lh, global.rates, rates.sdhm)
+  t = rbind(t, av =  colMeans(t))
+  dimnames(t) = list(c("1", "2", "3", "Mean"), c("Marginal log-likelihood", "Harmonic Mean global rate", "Harmonic SD global rate"))
+  average_result[[i]] = t
+}
+
+names(average_result) = titles
+
+for(i in seq_along(average_result)){
+  print(kable(average_result[[i]], caption = titles[i], format = "html", digits = 7) %>%
+          kable_styling(full_width = FALSE))
+  cat('\n')
+}
+
+gm = do.call(rbind, gelman_diag)
+rownames(gm) = titles
+kable(gm, caption = 
+        "Table S15: Point estimates and upper 95% confidence limits for Gelman-Rubin MCMC diagnostic tests", 
+      format = "html", digits = 2) %>%
+  kable_styling(full_width = FALSE)
+
+```
+
+## _Example BayesTraits script_
+```{bash eval = FALSE, echo = TRUE}
+BayesTraitsV3 tree.file data.file 
+1
+2
+NQM
+Pis Emp
+RevJump exp 10
+Stones 100 1000
+Iterations 10010000
+Burnin 10000
+Sample 10000
+LogFile logs/file
+run
+```
+
+## Half-life
+We calculate the half-life of each kinterm following methods from @pagel_deep_2018. The half-life of a term estimates the expected amount of time before a 50% chance of a cognate change. 
+
+```{r halflife, echo = FALSE}
+sd$half.life = -log(0.5) / (sd$mean.roc / 10000)
+
+sd %>%
+  group_by(meaning) %>%
+  summarise(mean.hf = mean(half.life) %>% round(0)) %>% 
+    kable(col.names = c("Kin code", "Half-life (years)"), format = 'html',
+        caption = "Table S16: Mean half-life for each kin code") %>%
+  kable_styling(full_width = FALSE)
+```
+
+
+# Frequency of use and rates of change: Swadesh words and kin terms
+
+```{r }
+# combined data
+d = read.csv('data/main-data-si.csv', stringsAsFactors = F)
+```
+
+We want to see if 
+
+- Rate of change correlates with frequency of use for kin terms
+- What the strength of this relationship is compared to Swadesh terms
+
+The difficulty is that the two data sets are structured differently. A given **kin term** can have a written / spoken / web frequency as well as a word / lemma frequency. A given **Swadesh term** only has one frequency (though it may be written / spoken / etc. depending on the source corpus). Term **length** correlates with frequency of use in a way that's not directly relevant to our analysis either.
+
+In order to create comparable kin- and Swadesh-datasets, we fit a linear mixed model as control on the kinterm data and use word random intercepts from this model in a second, predictive, model.
+
+## Control model: kin terms
+
+```{r }
+d.k = d %>% filter(word.type == 'kin.term') %>% droplevels
+
+# control for genre and frequency type (lemma / word) and word length
+lmm.k1 = lmer(clfpm ~ genre + freq.type + (1|word), data = d.k, REML = F, lmerControl(optimizer = 'bobyqa'))
+# summary(lmm.k1)
+lmm.k1.ranef = data.frame(ranef(lmm.k1)$word)
+lmm.k1.ranef$word = rownames(lmm.k1.ranef)
+names(lmm.k1.ranef)[1] = 'frequency.measure'
+d.k = merge(d.k,lmm.k1.ranef)
+
+# print(formula(lmm.k1))
+summary(lmm.k1)$coef %>%
+  kable('html', digits = 2, caption = 'Table S17: Summary of fixed effects for control model 1') %>% 
+  kable_styling(full_width = FALSE)
+```
+
+The word-level random intercepts capture word frequency across data sources.
+The intercepts predict rate of change, even when controlling for word length.
+
+
+```{r fig.width = 10, fig.height = 8}
+ggplot(d.k, aes(x = clfpm, y = frequency.measure, colour = genre, label = word)) + 
+  geom_label() + 
+  facet_wrap( ~ freq.type) + 
+  ylab('frequency measure (word intercept)') + 
+  xlab('centralised log frequency per million') +
+  ggtitle('Figure S4: correlation of frequency measure and raw frequencies in control model 1')
+```
+
+
+```{r }
+d.k2 = d.k %>% select(word,language,meaning,c.rate,word.type,frequency.measure) %>% unique
+d.k2$word %>% 
+  as.character %>% 
+  nchar %>% 
+  as.numeric ->
+  d.k2$word.length
+
+lmm.k2 = lmer(c.rate ~ frequency.measure + word.length + (1 |language), data = d.k2, REML = F, lmerControl(optimizer = 'bobyqa'))
+# summary(lmm.k2)
+# print(formula(lmm.k2))
+summary(lmm.k2)$coef %>%
+  kable('html', digits = 2, caption = 'Table S18: Summary of fixed effects for control model 1b') %>% 
+  kable_styling(full_width = FALSE)
+```
+
+## Predictive model: rate of change and frequency of use
+
+We use the word intercepts from the control model as measures of frequency of use for kin terms, and centralised log frequency per million for the Swadesh terms. We restrict the dataset to languages for which we have kin term data.
+
+```{r }
+d.sw = d %>% filter(word.type == 'swadesh.word')
+d.sw$frequency.measure = d.sw$clfpm
+d.sw$word.length = NA
+d.sw2 = d.sw %>% select(word,language,meaning,c.rate,word.type,frequency.measure,word.length)
+d2 = rbind(d.k2,d.sw2)
+
+# write.csv(d2, 'data/supplementary_data_processed.csv', row.names = F)
+d2$word.type = as.factor(d2$word.type)
+
+lmm.all1 = lmer(c.rate ~ frequency.measure * word.type + (word.type|language), data = d2, REML = F, lmerControl(optimizer = 'bobyqa'))
+# summary(lmm.all1)
+# print(formula(lmm.k2))
+summary(lmm.all1)$coef %>%
+  kable('html', digits = 2, caption = 'Table S19: Summary of fixed effects for predictive model') %>% 
+  kable_styling(full_width = FALSE)
+```
+
+```{r fig.width = 8, fig.height = 8}
+plot(allEffects(lmm.all1), multiline = T, ci.style = 'band', lines=list(lty=c(1,2)), main = 'Figure S5: rate of change ~ freq : word type', xlab = 'adjusted log freq per mil, centralised', ylab = 'mean rate of change, centralised')
+```
+
+```{r fig.width = 10, fig.height = 8}
+d2b = d2 %>% 
+  group_by(c.rate,meaning,word.type) %>% 
+  summarise(mean.frequency.measure = mean(frequency.measure))
+
+ggplot(d2b, aes(x = mean.frequency.measure, y = c.rate, colour = word.type, label = meaning)) + 
+  geom_text(data = d2b[d2b$word.type == 'swadesh.word',], aes(x = mean.frequency.measure, y = c.rate, label = meaning), colour = 'darkcyan') +
+  geom_label(data = d2b[d2b$word.type == 'kin.term',], aes(x = mean.frequency.measure, y = c.rate, label = meaning), colour = 'red') +
+  xlab('frequency measure') + 
+  ylab('rate of change') +
+  ggtitle('Figure S6: mean raw data correlation of rate of change and frequency measure in predictive model')
+
+```
+
+```{r echo=F, eval=F}
+# These are the plots in the paper
+
+# library(tidyverse)
+library(RColorBrewer)
+library(ggrepel)
+
+###########################################################
+# Rate of change x frequency
+###########################################################
+# - kin terms are labels
+# - swadesh terms are dots
+
+d3 = d2 %>% 
+  group_by(c.rate,meaning,word.type) %>% 
+  summarise(mean.frequency.measure = mean(frequency.measure))
+
+ggplot(d3, aes(x = mean.frequency.measure, y = c.rate, colour = word.type)) +
+  geom_smooth(method = 'lm', fullrange = T) +
+  geom_point(data = d3[d3$word.type == 'swadesh.word',], aes(x = mean.frequency.measure, y = c.rate), colour = 'grey') +
+  geom_label_repel(data = d3[d3$word.type == 'kin.term',], aes(x = mean.frequency.measure, y = c.rate, label = meaning), colour = 'red', box.padding = 0.15) +
+  xlim(-5,5) +
+  ylim(-5,5) +
+  scale_colour_manual(values = c('violetred2','grey'), labels = c("kin term", "swadesh word")) +
+  xlab('frequency of use (logged, centralised, scaled)') +
+  ylab('mean rate of replacement (centralised)') +
+  ggthemes::theme_tufte() + 
+  theme(legend.position = c(.9,.9), legend.title=element_blank())
+ggsave('figures/fig3.pdf', width = 5.5, height = 4)
+
+###########################################################
+# Frequency x kin term | language, ranked by rate of change
+###########################################################
+
+d3b = d2 %>%
+  filter(word.type == 'kin.term') %>% 
+  droplevels %>% 
+  arrange(c.rate) %>%
+  mutate(meaning2 = paste(as.character(meaning), ' (', as.character(round(c.rate,2)), ')', sep = '')) %>% 
+  mutate(meaning2 = factor(meaning2, unique(meaning2)))
+
+ggplot(d3b, aes(y = frequency.measure, x = meaning2, fill = meaning2)) + 
+  geom_violin() +
+  scale_fill_brewer(palette = 'Set3') +
+  theme(legend.position = 'none') +
+  coord_flip() +
+  xlab('meaning (sorted by centralised mean rate of replacement)') +
+  ylab('frequency of use (logged, centralised, scaled)') +
+  stat_summary(fun.y=mean, geom="point", shape=23, size=4) +
+  ggthemes::theme_tufte() +
+  theme(legend.position = 'none')
+ggsave('figures/fig2.pdf', width = 4, height = 4, device = cairo_pdf)
+
+
+```
+
+
+# References
