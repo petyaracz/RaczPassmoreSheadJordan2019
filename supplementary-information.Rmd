@@ -1,13 +1,15 @@
 ---
 title: "Supplementary Information"
+header-includes:
+- \usepackage[labelformat=empty]{caption}
 output:
+  pdf_document: 
+    latex_engine: xelatex
+    toc: yes
   html_document:
     number_sections: yes
     toc: yes
     toc_float: yes
-  pdf_document: 
-    latex_engine: xelatex
-    toc: yes
 bibliography: bibliography.bib
 ---
 
@@ -29,6 +31,8 @@ library(coda)
 library(psych)
 
 #setwd('~/Github/RaczPassmoreSheardJordan2019/')
+table_style = 'pandoc'
+table_width = TRUE # True for PDF, False for HTML
 ```
 
 # Kinship data
@@ -61,8 +65,8 @@ Frequency data were collected from `r ncorpora` corpora in `r nlangfreq` languag
 corpora %>% 
   mutate(ref = paste('[@', bibtex, ']', sep = '')) %>% 
   select(language,corpus.name,ref) %>%
-  kable('html', col.names = c('Language', 'Corpus name', 'Reference'), caption = 'Table S1: Source of frequency data (source of words is Kinbank)') %>% 
-  kable_styling(full_width = FALSE)
+  kable(table_style, col.names = c('Language', 'Corpus name', 'Reference'), caption = 'Table S1: Source of frequency data (source of words is Kinbank)') %>% 
+  kable_styling(full_width = table_width, latex_options="scale_down")
 ```
 
 The analysis uses one term per language per kinterm. If it arises that a langauge has multiple words for a particular kinterm, we use which ever was more frequent in the corpus data. In the case where a language has multiple words for a single kinterm, and we do not have access to frequency data, we rely on expert judgement to select a term. 
@@ -95,9 +99,9 @@ cn_description = c(
 )
 
 data.frame(cn, cn_description) %>%
-  kable(col.names = c("Column name", "Description"), format = 'html',
+  kable(col.names = c("Column name", "Description"), format = table_style,
         caption = "Table S2: Supplementary table column descriptions") %>%
-  kable_styling(full_width = FALSE)
+  kable_styling(full_width = table_width)
 ```
 
 ## Data summary
@@ -123,9 +127,9 @@ t$description = c("Father", "Mother", "Son", "Daughter", "Brother", "Sister",
 t = t[,c(1,4,2,3)]
 
 kable(t, col.names = c("Kinterm", "Description", "No. languages", "States"),
-      "html", caption = "Table S3: Each kinterm used, with counts for the number of
+      format = table_style, caption = "Table S3: Each kinterm used, with counts for the number of
       languages we have data for and the number of cognates across our sample") %>%
-  kable_styling(full_width = FALSE)
+  kable_styling(full_width = table_width)
 
 min.lang = min(t$language.count)
 max.lang = max(t$language.count)
@@ -213,8 +217,8 @@ We generated cognate classes using the Indo-European Etymological Dictionary [@b
 cognate_detection = read.csv('data/cognatedetection-results-si.csv') 
 
 kable(cognate_detection, 
-      "html", caption = "Table S4: Precision, recall, & F-score for various LingPy cognate detection algorithms and their threshold settings.") %>%
-  kable_styling(full_width = FALSE)
+      table_style, caption = "Table S4: Precision, recall, & F-score for various LingPy cognate detection algorithms and their threshold settings.") %>%
+  kable_styling(full_width = table_width)
 ```
 
 
@@ -283,8 +287,8 @@ for(i in seq_along(titles)){
 names(average_result) = titles
 
 for(i in seq_along(average_result)){
-  print(kable(average_result[[i]], caption = titles[i], format = "html", digits = 7) %>%
-          kable_styling(full_width = FALSE))
+  print(kable(average_result[[i]], caption = titles[i], format = table_style, digits = 7) %>%
+          kable_styling(full_width = table_width))
   cat('\n')
 }
 
@@ -292,8 +296,8 @@ gm = do.call(rbind, gelman_diag)
 rownames(gm) = titles
 kable(gm, caption = 
         "Table S15: Point estimates and upper 95% confidence limits for Gelman-Rubin MCMC diagnostic tests", 
-      format = "html", digits = 2) %>%
-  kable_styling(full_width = FALSE)
+      format = table_style, digits = 2) %>%
+  kable_styling(full_width = table_width)
 
 ```
 
@@ -322,9 +326,9 @@ sd$half.life = -log(0.5) / (sd$mean.roc / 10000)
 sd %>%
   group_by(meaning) %>%
   summarise(mean.hf = mean(half.life) %>% round(0)) %>% 
-    kable(col.names = c("Kin code", "Half-life (years)"), format = 'html',
+    kable(col.names = c("Kin code", "Half-life (years)"), format = table_style,
         caption = "Table S16: Mean half-life for each kin code") %>%
-  kable_styling(full_width = FALSE)
+  kable_styling(full_width = table_width)
 ```
 
 
@@ -359,8 +363,8 @@ d.k = merge(d.k,lmm.k1.ranef)
 
 # print(formula(lmm.k1))
 summary(lmm.k1)$coef %>%
-  kable('html', digits = 2, caption = 'Table S17: Summary of fixed effects for control model 1') %>% 
-  kable_styling(full_width = FALSE)
+  kable(table_style, digits = 2, caption = 'Table S17: Summary of fixed effects for control model 1') %>% 
+  kable_styling(full_width = table_width)
 ```
 
 The word-level random intercepts capture word frequency across data sources.
@@ -389,8 +393,8 @@ lmm.k2 = lmer(c.rate ~ frequency.measure + word.length + (1 |language), data = d
 # summary(lmm.k2)
 # print(formula(lmm.k2))
 summary(lmm.k2)$coef %>%
-  kable('html', digits = 2, caption = 'Table S18: Summary of fixed effects for control model 1b') %>% 
-  kable_styling(full_width = FALSE)
+  kable(table_style, digits = 2, caption = 'Table S18: Summary of fixed effects for control model 1b') %>% 
+  kable_styling(full_width = table_width)
 ```
 
 ## Predictive model: rate of change and frequency of use
@@ -411,8 +415,8 @@ lmm.all1 = lmer(c.rate ~ frequency.measure * word.type + (word.type|language), d
 # summary(lmm.all1)
 # print(formula(lmm.k2))
 summary(lmm.all1)$coef %>%
-  kable('html', digits = 2, caption = 'Table S19: Summary of fixed effects for predictive model') %>% 
-  kable_styling(full_width = FALSE)
+  kable(table_style, digits = 2, caption = 'Table S19: Summary of fixed effects for predictive model') %>% 
+  kable_styling(full_width = table_width)
 ```
 
 ```{r fig.width = 8, fig.height = 8}
