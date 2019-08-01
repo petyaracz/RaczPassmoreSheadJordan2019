@@ -2,16 +2,20 @@
 title: "Supplementary Information"
 output:
   html_document:
-    toc: true
-    toc_float: true
-    number_sections: true
+    number_sections: yes
+    toc: yes
+    toc_float: yes
+  pdf_document: 
+    latex_engine: xelatex
+    toc: yes
 bibliography: bibliography.bib
 ---
 
 ```{r include=FALSE, cache=FALSE}
+options(Encoding="UTF-8")
 knitr::opts_chunk$set(fig.width=5, fig.height=5, fig.path='figures/', eval=TRUE, echo=FALSE, warning = FALSE, message=FALSE, tidy=TRUE)
 
-devtools::install_github('SamPassmore/bayestraitr') # our R package to work with BayesTraits
+#devtools::install_github('SamPassmore/bayestraitr') # our R package to work with BayesTraits
 
 library(tidyverse)
 library(lme4)
@@ -24,7 +28,7 @@ library(purrr)
 library(coda)
 library(psych)
 
-setwd('~/Github/RaczPassmoreSheardJordan2019/')
+#setwd('~/Github/RaczPassmoreSheardJordan2019/')
 ```
 
 # Kinship data
@@ -393,7 +397,7 @@ summary(lmm.k2)$coef %>%
 
 We use the word intercepts from the control model as measures of frequency of use for kin terms, and centralised log frequency per million for the Swadesh terms. We restrict the dataset to languages for which we have kin term data.
 
-```{r }
+```{r}
 d.sw = d %>% filter(word.type == 'swadesh.word')
 d.sw$frequency.measure = d.sw$clfpm
 d.sw$word.length = NA
