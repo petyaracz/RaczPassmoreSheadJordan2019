@@ -61,16 +61,18 @@ We collected kin terms from `r nlang` languages for the following relations: `r 
 
 Frequency data were collected from `r ncorpora` corpora in `r nlangfreq` languages in three corpus types: spoken, written, and web-crawled. The list of corpora is in Table 1 below.
 
-```{r}
-corpora %>% 
-  mutate(ref = paste('[@', bibtex, ']', sep = '')) %>% 
-  select(language,corpus.name,ref) %>%
-  kable(table_style, col.names = c('Language', 'Corpus name', 'Reference'), caption = 'Table S1: Source of frequency data (source of words is Kinbank)') %>% 
-  kable_styling(full_width = table_width, latex_options="scale_down")
-```
-
 The analysis uses one term per language per kinterm. If it arises that a langauge has multiple words for a particular kinterm, we use which ever was more frequent in the corpus data. In the case where a language has multiple words for a single kinterm, and we do not have access to frequency data, we rely on expert judgement to select a term. 
 
+```{r}
+corpora %>% 
+  mutate(ref = paste('@', bibtex, sep = '')) %>% 
+  select(language,corpus.name,ref) %>%
+  kable(., format = 'pandoc', col.names = c('Language', 'Corpus name', 'Reference'), caption = 'Table S1: Source of frequency data (source of words is Kinbank)', booktabs = TRUE) %>% 
+  kable_styling(latex_options=c("scale_down", "HOLD_position"))
+```
+
+
+\pagebreak
 ## Supplementary data table
 
 See the supplementary data csv file for the raw data used in this study.
@@ -136,11 +138,7 @@ max.lang = max(t$language.count)
 
 ```
 
-
-
 ## Frequency data
-
-Below are bar graphs of term frequency by langauge, across corpora types (web, written, or spoken).
 
 ```{r echo = FALSE, fig.align='center', fig.width=10, fig.height=15}
 sd$corpus.type = factor(sd$corpora.type, levels = c("web", "written", "spoken"))
@@ -209,6 +207,7 @@ ggplot(data=df_freq %>% filter(corpus.type == "spoken")) +
   ggtitle('Figure S3: Spoken frequencies of terms across languages')
 ```
 
+\pagebreak
 # Cognate data
 
 We generated cognate classes using the Indo-European Etymological Dictionary [@buck], LingPy [@list_lingpy._2018], and a panel of volunteer experts, recruited on Linguist List (all faults remain ours). All terms were automatically transcribed into the Speech Assessment Methods Phonetic Alphabet (SAMPA) through LingPy's `uni2sampa` function. Cognates were automatically allocated using LingPy's `cluster` function. Using the cognate-coded Swadesh list (subset to those languages for which we also have kinterms), we tested the appropriateness of edit distance, SCA, and turchin algorithms, alongside Phonemic and Phonetic transcriptions for cognate detection in our data, following the code examples from [Lingpy.org](http://lingpy.org/examples.html). The F-score was highest for the edit-distance algorithm with a 0.4 threshold (see table S4) [@list_lingpy._2018]. We then manually adjusted the results, followed by expert review which resulted in minor changes. Automatic decisions and the corrections are available in the supplementary data file.
@@ -316,7 +315,7 @@ Sample 10000
 LogFile logs/file
 run
 ```
-
+\pagebreak
 ## Half-life
 We calculate the half-life of each kinterm following methods from @pagel_deep_2018. The half-life of a term estimates the expected amount of time before a 50% chance of a cognate change. 
 
@@ -331,7 +330,7 @@ sd %>%
   kable_styling(full_width = table_width)
 ```
 
-
+\pagebreak
 # Frequency of use and rates of change: Swadesh words and kin terms
 
 ```{r }
