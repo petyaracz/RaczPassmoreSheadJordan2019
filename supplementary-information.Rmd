@@ -2,12 +2,12 @@
 title: "Supplementary Information, Usage frequency and lexical class determine the evolution of kinship terms in Indo-European"
 author: "Rácz, Passmore, Sheard, and Jordan"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     number_sections: yes
     toc: yes
     toc_float: yes
-  pdf_document:
-    toc: yes
 always_allow_html: yes
 bibliography: bibliography.bib
 ---
@@ -15,7 +15,7 @@ bibliography: bibliography.bib
 ```{r include=FALSE, cache=FALSE}
 knitr::opts_chunk$set(fig.width=5, fig.height=5, fig.path='figures/', eval=TRUE, echo=FALSE, warning = FALSE, message=FALSE, tidy=TRUE)
 
-devtools::install_github('SamPassmore/bayestraitr') # our R package to work with BayesTraits
+# devtools::install_github('SamPassmore/bayestraitr') # our R package to work with BayesTraits
 
 library(tidyverse)
 library(lme4)
