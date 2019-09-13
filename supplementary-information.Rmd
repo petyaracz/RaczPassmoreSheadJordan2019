@@ -1,13 +1,14 @@
 ---
-title: "Supplementary Information"
+title: "Supplementary Information, Usage frequency and lexical class determine the evolution of kinship terms in Indo-European"
+author: "Rácz, Passmore, Sheard, and Jordan"
 output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
   html_document:
     number_sections: yes
     toc: yes
     toc_float: yes
-  pdf_document: 
-    latex_engine: xelatex
-    toc: yes
 bibliography: bibliography.bib
 ---
 
@@ -17,9 +18,12 @@ knitr::opts_chunk$set(fig.width=5, fig.height=5, fig.path='figures/', eval=TRUE,
 
 #devtools::install_github('SamPassmore/bayestraitr') # our R package to work with BayesTraits
 
+
 library(tidyverse)
 library(lme4)
 library(effects)
+library(broom)
+library(knitr)
 library(kableExtra)
 library(ggplot2)
 library(sjPlot)
@@ -55,7 +59,7 @@ nlangfreq = sd %>%
 
 We collected kin terms from `r nlang` languages for the following relations: `r kinterms`, collected from a combination of native speakers, ethnographies, and dictionaries in our ['Kinbank' database](https://excd.org/research-activities/kinbank/). Initially, the analyses used a broader set of kinship terms (e.g. FB, FZ), however we restricted the sample to form a comparable set of word frequencies. This is because most Indo-European languages do not have separate terms for e.g.\ MZD and MBD and separate terms for e.g.\ BW are exceedingly rare (both across languages as types and within languages as token). We have not included _husband_ and _wife_, because these are often synonymous with _man_ and _woman_, respectively.
 
-Frequency data were collected from `r ncorpora` corpora in `r nlangfreq` languages in three corpus types: spoken, written, and web-crawled. The list of corpora is in Table 1 below.
+Frequency data were collected from `r ncorpora` corpora in `r nlangfreq` languages in three corpus types: spoken, written, and web-crawled. The list of corpora is in Table S1 below.
 
 ```{r}
 corpora %>% 
@@ -351,21 +355,31 @@ d.k = d %>% filter(word.type == 'kin.term') %>% droplevels
 
 # control for genre and frequency type (lemma / word) and word length
 lmm.k1 = lmer(clfpm ~ genre + freq.type + (1|word), data = d.k, REML = F, lmerControl(optimizer = 'bobyqa'))
+
 # summary(lmm.k1)
 lmm.k1.ranef = data.frame(ranef(lmm.k1)$word)
 lmm.k1.ranef$word = rownames(lmm.k1.ranef)
 names(lmm.k1.ranef)[1] = 'frequency.measure'
 d.k = merge(d.k,lmm.k1.ranef)
+```
 
-# print(formula(lmm.k1))
+The formula of control model 1 is: 
+
+```{r }
+print(formula(lmm.k1))
+```
+
+The aim of this model is to provide us with a word random intercept that incorporates genre and frequency type information. As a result, random slopes were not tested. The table below shows the fixed effects for this model.
+
+```{r }
+
 summary(lmm.k1)$coef %>%
   kable('html', digits = 2, caption = 'Table S17: Summary of fixed effects for control model 1') %>% 
   kable_styling(full_width = FALSE)
 ```
 
 The word-level random intercepts capture word frequency across data sources.
-The intercepts predict rate of change, even when controlling for word length.
-
+The intercepts predict rate of change, even when controlling for word length. This can be seen in the Figure below.
 
 ```{r fig.width = 10, fig.height = 8}
 ggplot(d.k, aes(x = clfpm, y = frequency.measure, colour = genre, label = word)) + 
@@ -376,6 +390,7 @@ ggplot(d.k, aes(x = clfpm, y = frequency.measure, colour = genre, label = word))
   ggtitle('Figure S4: correlation of frequency measure and raw frequencies in control model 1')
 ```
 
+ 
 
 ```{r }
 d.k2 = d.k %>% select(word,language,meaning,c.rate,word.type,frequency.measure) %>% unique
@@ -388,14 +403,29 @@ d.k2$word %>%
 lmm.k2 = lmer(c.rate ~ frequency.measure + word.length + (1 |language), data = d.k2, REML = F, lmerControl(optimizer = 'bobyqa'))
 # summary(lmm.k2)
 # print(formula(lmm.k2))
+```
+
+We fit control model 1b to demonstrate the frequency effect above and beyond the word length effect. The formula of control model 1b is: 
+
+```{r }
+print(formula(lmm.k2))
+```
+
+Since the frequency measure and word length are both word-level predictors, we have no potential random slopes and report the model with a word random intercept only. The estimates of the fixed effects can be seen in the figure below.
+
+```{r }
 summary(lmm.k2)$coef %>%
   kable('html', digits = 2, caption = 'Table S18: Summary of fixed effects for control model 1b') %>% 
   kable_styling(full_width = FALSE)
 ```
 
+Then, the first control model provides us with aggregated information on the centralised log frequency per million of each kinship word. This allows direct comparison with the core vocabulary (where we only have one datum per word) without a considerable loss of information.
+
+The second control model only serves to demonstrate that the frequency effect is not an artefact of word length.
+
 ## Predictive model: rate of change and frequency of use
 
-We use the word intercepts from the control model as measures of frequency of use for kin terms, and centralised log frequency per million for the Swadesh terms. We restrict the dataset to languages for which we have kin term data.
+In the predictive model, we use the word intercepts from control model 1 as measures of frequency of use for kin terms, and centralised log frequency per million for the Swadesh terms. We restrict the dataset to languages for which we have kin term data.
 
 ```{r}
 d.sw = d %>% filter(word.type == 'swadesh.word')
@@ -408,6 +438,30 @@ d2 = rbind(d.k2,d.sw2)
 d2$word.type = as.factor(d2$word.type)
 
 lmm.all1 = lmer(c.rate ~ frequency.measure * word.type + (word.type|language), data = d2, REML = F, lmerControl(optimizer = 'bobyqa'))
+lmm.all1b = lmer(c.rate ~ frequency.measure * word.type + (1|language), data = d2, REML = F, lmerControl(optimizer = 'bobyqa'))
+
+```
+
+The formula of control model 1 is: 
+
+```{r }
+print(formula(lmm.all1))
+```
+
+The one fixed effect that can vary across language, the random effect, is word type. Goodness-of-fit tests reveal that this random slope results in a better fit, so we report the model with the slope:
+
+```{r warning=F}
+anova.object = anova(lmm.all1,lmm.all1b) %>% 
+  tidy
+names(anova.object) = names(anova.object)   
+anova.object %>% select(term, df, AIC, BIC, logLik, deviance) %>% 
+  kable()
+
+```
+
+The estimates of the fixed effects for the best fit of the predictive model can be seen below.
+
+```{r }
 # summary(lmm.all1)
 # print(formula(lmm.k2))
 summary(lmm.all1)$coef %>%
@@ -415,9 +469,13 @@ summary(lmm.all1)$coef %>%
   kable_styling(full_width = FALSE)
 ```
 
+The effects plot of the interaction can be seen below:
+
 ```{r fig.width = 8, fig.height = 8}
 plot(allEffects(lmm.all1), multiline = T, ci.style = 'band', lines=list(lty=c(1,2)), main = 'Figure S5: rate of change ~ freq : word type', xlab = 'adjusted log freq per mil, centralised', ylab = 'mean rate of change, centralised')
 ```
+
+We also provide the plot of the data below for the reader's convenience.
 
 ```{r fig.width = 10, fig.height = 8}
 d2b = d2 %>% 
