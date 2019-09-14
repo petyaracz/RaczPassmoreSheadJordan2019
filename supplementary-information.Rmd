@@ -2,13 +2,13 @@
 title: "Supplementary Information, Usage frequency and lexical class determine the evolution of kinship terms in Indo-European"
 author: "Rácz, Passmore, Sheard, and Jordan"
 output:
-  pdf_document:
-    latex_engine: xelatex
-    toc: yes
   html_document:
     number_sections: yes
     toc: yes
     toc_float: yes
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
 bibliography: bibliography.bib
 ---
 
@@ -411,7 +411,7 @@ We fit control model 1b to demonstrate the frequency effect above and beyond the
 print(formula(lmm.k2))
 ```
 
-Since the frequency measure and word length are both word-level predictors, we have no potential random slopes and report the model with a word random intercept only. The estimates of the fixed effects can be seen in the figure below.
+Since the frequency measure and word length are both word-level predictors, we have no potential random slopes and report the model with a word random intercept only. The estimates of the fixed effects can be seen in table S18.
 
 ```{r }
 summary(lmm.k2)$coef %>%
