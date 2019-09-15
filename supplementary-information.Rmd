@@ -2,13 +2,13 @@
 title: "Supplementary Information, Usage frequency and lexical class determine the evolution of kinship terms in Indo-European"
 author: "Rácz, Passmore, Sheard, and Jordan"
 output:
-  pdf_document:
-    latex_engine: xelatex
-    toc: yes
   html_document:
     number_sections: yes
     toc: yes
     toc_float: yes
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
 bibliography: bibliography.bib
 header-includes:
     - \usepackage{caption}
@@ -361,7 +361,7 @@ The aim of M1.1 is to provide us with a word meaning random intercept for M, F, 
 The word meaning-level random intercepts capture word frequency across data sources. The intercepts predict rate of change, even when controlling for word length. 
 
 
-```{r M1}
+```{r M1.1}
 d.k = d %>% dplyr::filter(word.type == 'kin.term') %>% droplevels
 
 # control for genre and frequency type (lemma / word) and word length
@@ -374,7 +374,7 @@ d.k = merge(d.k,m1.1.ranef)
 
 # print(formula(m1.1))
 summary(m1.1)$coef %>%
-  kable(format, digits = 2, caption = 'Table S17: Summary of fixed effects for control model 1') %>% 
+  kable(format, digits = 2, caption = 'Table S17: Summary of fixed effects for control model M1.1') %>% 
   kable_styling(full_width = FALSE)
 ```
 
@@ -401,7 +401,7 @@ M1.1 provides us with aggregated information on the centralised log frequency pe
 
 M1.2 only serves to demonstrate that the frequency effect is not an artefact of word length.
 
-```{r M2}
+```{r M1.2}
 d.k2 = d.k %>% select(word,language,meaning,c.rate,word.type,frequency.measure) %>% unique
 d.k2$word %>% 
   as.character %>% 
@@ -413,7 +413,7 @@ m1.2 = lmer(c.rate ~ frequency.measure + word.length + (1 |language), data = d.k
 # summary(m1.2)
 # print(formula(m1.2))
 summary(m1.2)$coef %>%
-  kable(format, digits = 2, caption = 'Table S18: Summary of fixed effects for control M2') %>% 
+  kable(format, digits = 2, caption = 'Table S18: Summary of fixed effects for control M1.2') %>% 
   kable_styling(full_width = FALSE)
 ```
 
@@ -447,19 +447,19 @@ m2.2 = lmer(c.rate ~ frequency.measure * word.type + (1|language), data = d2, RE
 anova.object = anova(m2.1,m2.2) %>% 
   tidy
 names(anova.object) = names(anova.object)   
-anova.object$term = c("M3.2", "M3.1")
+anova.object$term = c("M2.1", "M2.2")
 anova.object %>% select(term, df, AIC, BIC, logLik, deviance) %>% 
   kable(format, digits = 2, caption = "Table S19: Goodness for fit for model random effect structures") %>% 
   kable_styling(full_width = FALSE)
 
 summary(m2.1)$coef %>%
-  kable(format, digits = 2, caption = 'Table S20: Summary of fixed effects for predictive model') %>% 
+  kable(format, digits = 2, caption = 'Table S20: Summary of fixed effects for predictive model M2.2') %>% 
   kable_styling(full_width = FALSE)
 ```
 
 
 ```{r fig.width = 5, fig.height = 5}
-plot(allEffects(m2.1), multiline = T, ci.style = 'band', lines=list(lty=c(1,2)), main = 'Figure S5: rate of change ~ freq : word type', xlab = 'adjusted log freq per mil, centralised', ylab = 'mean rate of change, centralised')
+plot(allEffects(m2.1), multiline = T, ci.style = 'band', lines=list(lty=c(1,2)), main = 'Figure S5: M2.2 rate of change ~ freq : word type', xlab = 'adjusted log freq per mil, centralised', ylab = 'mean rate of change, centralised')
 ```
 
 ```{r fig.width = 10, fig.height = 8}
