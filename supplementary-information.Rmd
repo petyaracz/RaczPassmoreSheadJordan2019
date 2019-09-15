@@ -2,36 +2,36 @@
 title: "Supplementary Information, Usage frequency and lexical class determine the evolution of kinship terms in Indo-European"
 author: "Rácz, Passmore, Sheard, and Jordan"
 output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: yes
   html_document:
     number_sections: yes
     toc: yes
     toc_float: yes
-  pdf_document:
-    latex_engine: xelatex
-    toc: yes
 bibliography: bibliography.bib
+header-includes:
+    - \usepackage{caption}
 ---
-
+\captionsetup[table]{labelformat=empty}
 ```{r include=FALSE, cache=FALSE}
 options(Encoding="UTF-8")
 knitr::opts_chunk$set(fig.width=5, fig.height=5, fig.path='figures/', eval=TRUE, echo=FALSE, warning = FALSE, message=FALSE, tidy=TRUE)
 
 #devtools::install_github('SamPassmore/bayestraitr') # our R package to work with BayesTraits
 
-
 library(tidyverse)
 library(lme4)
 library(effects)
 library(broom)
-library(knitr)
 library(kableExtra)
-library(ggplot2)
 library(sjPlot)
 library(bayestraitr)
 library(purrr)
 library(coda)
 library(psych)
 
+format = 'pandoc'
 #setwd('~/Github/RaczPassmoreSheardJordan2019/')
 ```
 
@@ -57,7 +57,7 @@ nlangfreq = sd %>%
   nrow
 ```
 
-We collected kin terms from `r nlang` languages for the following relations: `r kinterms`, collected from a combination of native speakers, ethnographies, and dictionaries in our ['Kinbank' database](https://excd.org/research-activities/kinbank/). Initially, the analyses used a broader set of kinship terms (e.g. FB, FZ), however we restricted the sample to form a comparable set of word frequencies. This is because most Indo-European languages do not have separate terms for e.g.\ MZD and MBD and separate terms for e.g.\ BW are exceedingly rare (both across languages as types and within languages as token). We have not included _husband_ and _wife_, because these are often synonymous with _man_ and _woman_, respectively.
+We collected kin terms from `r nlang` languages for the following relations: `r kinterms` (i.e.\ brother, daughter, father, mother, mother's brother, mother's sister, mother's sister's daughter, mother's sister's son, son, sister), collected from a combination of native speakers, ethnographies, and dictionaries in our ['Kinbank' database](https://excd.org/research-activities/kinbank/). Initially, the analyses used a broader set of kinship terms (e.g. FB, FZ, BW, ZH, i.e.\ father's brother, father's sister, brother's wife, sister's husband), however, we restricted the sample to form a comparable set of word frequencies. This is because most Indo-European languages do not have separate terms for e.g.\ MZD and MBD and separate terms for e.g.\ BW are exceedingly rare (both across languages as types and within languages as tokens). We have not included _husband_ and _wife_, because these are often synonymous with _man_ and _woman_, respectively.
 
 Frequency data were collected from `r ncorpora` corpora in `r nlangfreq` languages in three corpus types: spoken, written, and web-crawled. The list of corpora is in Table S1 below.
 
@@ -65,11 +65,11 @@ Frequency data were collected from `r ncorpora` corpora in `r nlangfreq` languag
 corpora %>% 
   mutate(ref = paste('[@', bibtex, ']', sep = '')) %>% 
   select(language,corpus.name,ref) %>%
-  kable('html', col.names = c('Language', 'Corpus name', 'Reference'), caption = 'Table S1: Source of frequency data (source of words is Kinbank)') %>% 
+  kable(format, col.names = c('Language', 'Corpus name', 'Reference'), caption = 'Table S1: Source of frequency data (source of words is Kinbank)') %>% 
   kable_styling(full_width = FALSE)
 ```
 
-The analysis uses one term per language per kinterm. If it arises that a langauge has multiple words for a particular kinterm, we use which ever was more frequent in the corpus data. In the case where a language has multiple words for a single kinterm, and we do not have access to frequency data, we rely on expert judgement to select a term. 
+The analysis uses one term per language per kinterm. If it arises that a language has multiple words for a particular kinterm, we use which ever was more frequent in the corpus data. In the case where a language has multiple words for a single kinterm, and we do not have access to frequency data, we rely on expert judgement to select a term. 
 
 ## Supplementary data table
 
@@ -99,7 +99,7 @@ cn_description = c(
 )
 
 data.frame(cn, cn_description) %>%
-  kable(col.names = c("Column name", "Description"), format = 'html',
+  kable(col.names = c("Column name", "Description"), format = format,
         caption = "Table S2: Supplementary table column descriptions") %>%
   kable_styling(full_width = FALSE)
 ```
@@ -107,7 +107,7 @@ data.frame(cn, cn_description) %>%
 ## Data summary
 
 We estimate rate of replacement and compare it with frequency of use for ten types of kin relations. 
-Here we use MB, MZ, MZS, and MZD as shorthand for broader terms (uncle, aunt, male cousin, and female cousin, respectively). This is because commonly used terms in this set of languages do not distinguish terms according to the parent's gender.
+Here we use MB, MZ, MZS, and MZD as shorthand for broader terms (uncle, aunt, male cousin, and female cousin, respectively). This is because, as we note in the first section, commonly used terms in this set of languages do not distinguish terms according to the parent's gender.
 
 Below is a table indicating the shorthand used for each kinterm, the number of languages for which we have data, and the number of states (or cognates) for that term. 
 
@@ -127,7 +127,7 @@ t$description = c("Father", "Mother", "Son", "Daughter", "Brother", "Sister",
 t = t[,c(1,4,2,3)]
 
 kable(t, col.names = c("Kinterm", "Description", "No. languages", "States"),
-      "html", caption = "Table S3: Each kinterm used, with counts for the number of
+      format, caption = "Table S3: Each kinterm used, with counts for the number of
       languages we have data for and the number of cognates across our sample") %>%
   kable_styling(full_width = FALSE)
 
@@ -140,7 +140,7 @@ max.lang = max(t$language.count)
 
 ## Frequency data
 
-Below are bar graphs of term frequency by langauge, across corpora types (web, written, or spoken).
+Below are bar graphs of term frequency by language, across corpora types (web, written, or spoken).
 
 ```{r echo = FALSE, fig.align='center', fig.width=10, fig.height=15}
 sd$corpus.type = factor(sd$corpora.type, levels = c("web", "written", "spoken"))
@@ -211,13 +211,13 @@ ggplot(data=df_freq %>% filter(corpus.type == "spoken")) +
 
 # Cognate data
 
-We generated cognate classes using the Indo-European Etymological Dictionary [@buck], LingPy [@list_lingpy._2018], and a panel of volunteer experts, recruited on Linguist List (all faults remain ours). All terms were automatically transcribed into the Speech Assessment Methods Phonetic Alphabet (SAMPA) through LingPy's `uni2sampa` function. Cognates were automatically allocated using LingPy's `cluster` function. Using the cognate-coded Swadesh list (subset to those languages for which we also have kinterms), we tested the appropriateness of edit distance, SCA, and turchin algorithms, alongside Phonemic and Phonetic transcriptions for cognate detection in our data, following the code examples from [Lingpy.org](http://lingpy.org/examples.html). The F-score was highest for the edit-distance algorithm with a 0.4 threshold (see table S4) [@list_lingpy._2018]. We then manually adjusted the results, followed by expert review which resulted in minor changes. Automatic decisions and the corrections are available in the supplementary data file.
+We generated cognate classes using the Indo-European Etymological Dictionary [@buck], LingPy [@list_lingpy._2018], and a panel of volunteer experts, recruited on Linguist List (all faults remain ours). All terms were automatically transcribed into the Speech Assessment Methods Phonetic Alphabet (SAMPA) through LingPy's `uni2sampa` function. Cognates were automatically allocated using LingPy's `cluster` function. Using the cognate-coded Swadesh list, the list of core vocabulary terms (subset to those languages for which we also have kinterms), we tested the appropriateness of edit distance, SCA, and turchin algorithms, alongside Phonemic and Phonetic transcriptions for cognate detection in our data, following the code examples from [Lingpy.org](http://lingpy.org/examples.html). The F-score was highest for the edit-distance algorithm with a 0.4 threshold (see table S4) [@list_lingpy._2018]. We then manually adjusted the results, followed by expert review which resulted in minor changes. Automatic decisions and the corrections are available in the supplementary data file.
 
 ```{r results_table }
 cognate_detection = read.csv('data/cognatedetection-results-si.csv') 
 
 kable(cognate_detection, 
-      "html", caption = "Table S4: Precision, recall, & F-score for various LingPy cognate detection algorithms and their threshold settings.") %>%
+      format, caption = "Table S4: Precision, recall, & F-score for various LingPy cognate detection algorithms and their threshold settings.") %>%
   kable_styling(full_width = FALSE)
 ```
 
@@ -230,7 +230,7 @@ We used 1000 phylogenies from the most recent Bayesian posterior of Indo-Europea
 
 Table S3 shows the number of languages and states used to estimate rate of change for each kinterm. Each language is linked to a taxon in the Indo-European phylogeny. Following the methods in @pagel_deep_2018 we use BayesTraits version 3.0.1 to implement a Bayesian MCMC approach to estimate the instantaneous global rate of change for each kin-term through Q-matrix normalisation. Probabilities of frequency were scaled to represent the empirical frequencies. We used a stepping-stone sampler, using 100 stones for 1000 iterations each. MCMC chains ran for a total of 10,010,000 iterations, with a burn-in of 10,000, sampling every 1000 iterations. This left a posterior sample of 10,000 iterations, which is approximately 10 samples per tree. To make the rates comparable to Pagel et al., we scale instantaneous rates to change per 10,000 years.
 
-Each analysis was run 3 times to ensure the MCMC chain converged. Tables S5 - S14 display the marginal log-likelihood for each MCMC run, the mean global rate of change for each run, and the average across the three runs. For each kinterm, we also used the Gelman-Rubin diagnostic test for convergence [@gelman1992inference]. This tests for MCMC convergence between multiple chains by analysing the differences between them. By estimating a 'potential scale reduction factor', which when multiplying across chains would remove the differences, we can quantify the differences between chains (a scale reduction factor 1 indicating no change needed). A rule of thumb suggests a point estimates of less than 1.1 is sufficient to claim convergence, and ensuring upper limits are also around these limits.  
+Each analysis was run 3 times to ensure the MCMC chain converged. Tables S5 - S14 display the marginal log-likelihood for each MCMC run, the mean global rate of change for each run, and the average across the three runs. Each table is labelled by kin code. For each kinterm, we also used the Gelman-Rubin diagnostic test for convergence [@gelman1992inference]. This tests for MCMC convergence between multiple chains by analysing the differences between them. By estimating a 'potential scale reduction factor', which when multiplying across chains would remove the differences, we can quantify the differences between chains (a scale reduction factor 1 indicating no change needed). A rule of thumb suggests a point estimates of less than 1.1 is sufficient to claim convergence, and ensuring upper limits are also around these limits.  
 
 ```{r mcmc.diagnostics, eval = TRUE, results='asis'}
 # get diagnostics and averages
@@ -287,7 +287,7 @@ for(i in seq_along(titles)){
 names(average_result) = titles
 
 for(i in seq_along(average_result)){
-  print(kable(average_result[[i]], caption = titles[i], format = "html", digits = 7) %>%
+  print(kable(average_result[[i]], caption = titles[i], format = format, digits = 7) %>%
           kable_styling(full_width = FALSE))
   cat('\n')
 }
@@ -296,7 +296,7 @@ gm = do.call(rbind, gelman_diag)
 rownames(gm) = titles
 kable(gm, caption = 
         "Table S15: Point estimates and upper 95% confidence limits for Gelman-Rubin MCMC diagnostic tests", 
-      format = "html", digits = 2) %>%
+      format = format, digits = 2) %>%
   kable_styling(full_width = FALSE)
 
 ```
@@ -326,7 +326,7 @@ sd$half.life = -log(0.5) / (sd$mean.roc / 10000)
 sd %>%
   group_by(meaning) %>%
   summarise(mean.hf = mean(half.life) %>% round(0)) %>% 
-    kable(col.names = c("Kin code", "Half-life (years)"), format = 'html',
+    kable(col.names = c("Kin code", "Half-life (years)"), format = format,
         caption = "Table S16: Mean half-life for each kin code") %>%
   kable_styling(full_width = FALSE)
 ```
@@ -336,7 +336,8 @@ sd %>%
 
 ```{r }
 # combined data
-d = read.csv('data/main-data-si.csv', stringsAsFactors = F)
+#d = read.csv('data/supplementary_data_Pagel_September.csv')
+d = read.csv('data/main-data-si.csv', stringsAsFactors = TRUE)
 ```
 
 We want to see if 
@@ -344,55 +345,63 @@ We want to see if
 - Rate of change correlates with frequency of use for kin terms
 - What the strength of this relationship is compared to Swadesh terms
 
-The difficulty is that the two data sets are structured differently. A given **kin term** can have a written / spoken / web frequency as well as a word / lemma frequency. A given **Swadesh term** only has one frequency (though it may be written / spoken / etc. depending on the source corpus). Term **length** correlates with frequency of use in a way that's not directly relevant to our analysis either.
+The difficulty is that the two data sets are structured differently. A given **kin term** can have a written / spoken / web frequency as well as a word / lemma frequency. A given **Swadesh term** (core vocabulary term) only has one frequency (though it may be written / spoken / etc. depending on the source corpus). Term **length** correlates with frequency of use in a way that is not directly relevant to our analysis either.
 
-In order to create comparable kin- and Swadesh-datasets, we fit a linear mixed model as control on the kinterm data and use word random intercepts from this model in a second, predictive, model.
+In order to create comparable kin- and Swadesh-datasets, we fit a linear mixed model (M1.1) as control on the kinterm data and use word meaning random intercepts from this model in a second, predictive, model (M2)
 
 ## Control model: kin terms
 
-```{r }
-d.k = d %>% filter(word.type == 'kin.term') %>% droplevels
+>*Model 1.1:*
+>
+>Centralised log frequency of use per million ~ Corpus genre + Frequency type + (1 | Word meaning)
+
+
+The aim of M1.1 is to provide us with a word meaning random intercept for M, F, B, Z, etc.\ that incorporates genre and frequency type information. As a result, random slopes were not tested. Table S17 shows the fixed effects for this model.
+
+The word meaning-level random intercepts capture word frequency across data sources. The intercepts predict rate of change, even when controlling for word length. 
+
+
+```{r M1}
+d.k = d %>% dplyr::filter(word.type == 'kin.term') %>% droplevels
 
 # control for genre and frequency type (lemma / word) and word length
-lmm.k1 = lmer(clfpm ~ genre + freq.type + (1|word), data = d.k, REML = F, lmerControl(optimizer = 'bobyqa'))
+m1.1 = lmer(clfpm ~ genre + freq.type + (1|word), data = d.k, REML = F, lmerControl(optimizer = 'bobyqa'))
+# summary(m1.1)
+m1.1.ranef = data.frame(ranef(m1.1)$word)
+m1.1.ranef$word = rownames(m1.1.ranef)
+names(m1.1.ranef)[1] = 'frequency.measure'
+d.k = merge(d.k,m1.1.ranef)
 
-# summary(lmm.k1)
-lmm.k1.ranef = data.frame(ranef(lmm.k1)$word)
-lmm.k1.ranef$word = rownames(lmm.k1.ranef)
-names(lmm.k1.ranef)[1] = 'frequency.measure'
-d.k = merge(d.k,lmm.k1.ranef)
-```
-
-The formula of control model 1 is: 
-
-```{r }
-print(formula(lmm.k1))
-```
-
-The aim of this model is to provide us with a word random intercept that incorporates genre and frequency type information. As a result, random slopes were not tested. The table below shows the fixed effects for this model.
-
-```{r }
-
-summary(lmm.k1)$coef %>%
-  kable('html', digits = 2, caption = 'Table S17: Summary of fixed effects for control model 1') %>% 
+# print(formula(m1.1))
+summary(m1.1)$coef %>%
+  kable(format, digits = 2, caption = 'Table S17: Summary of fixed effects for control model 1') %>% 
   kable_styling(full_width = FALSE)
 ```
 
-The word-level random intercepts capture word frequency across data sources.
-The intercepts predict rate of change, even when controlling for word length. This can be seen in the Figure below.
 
-```{r fig.width = 10, fig.height = 8}
-ggplot(d.k, aes(x = clfpm, y = frequency.measure, colour = genre, label = word)) + 
-  geom_label() + 
-  facet_wrap( ~ freq.type) + 
-  ylab('frequency measure (word intercept)') + 
-  xlab('centralised log frequency per million') +
-  ggtitle('Figure S4: correlation of frequency measure and raw frequencies in control model 1')
+```{r figS4, fig.width = 10, fig.height = 8, eval=F}
+# ggplot(d.k, aes(x = clfpm, y = frequency.measure, colour = genre, label = word)) +
+  # geom_label() + 
+  # facet_wrap( ~ freq.type) + 
+  # ylab('frequency measure (word intercept)') + 
+  # xlab('centralised log frequency per million') +
+  # ggtitle('Figure S4: correlation of frequency measure and raw frequencies in control M1')
 ```
 
- 
 
-```{r }
+
+>*Model 1.2:*
+>
+>Centralised rate of replacement ~ Frequency measure + Word length + (1 | Language)
+
+
+Since the frequency measure and word length are both word-level predictors, we have no potential random slopes and report the model with a random intercept for language only. The estimates of the fixed effects can be seen in table S18.
+
+M1.1 provides us with aggregated information on the centralised log frequency per million of each kinship word. This allows direct comparison with the core vocabulary (where we only have one datum per word) without a considerable loss of information.
+
+M1.2 only serves to demonstrate that the frequency effect is not an artefact of word length.
+
+```{r M2}
 d.k2 = d.k %>% select(word,language,meaning,c.rate,word.type,frequency.measure) %>% unique
 d.k2$word %>% 
   as.character %>% 
@@ -400,34 +409,28 @@ d.k2$word %>%
   as.numeric ->
   d.k2$word.length
 
-lmm.k2 = lmer(c.rate ~ frequency.measure + word.length + (1 |language), data = d.k2, REML = F, lmerControl(optimizer = 'bobyqa'))
-# summary(lmm.k2)
-# print(formula(lmm.k2))
-```
-
-We fit control model 1b to demonstrate the frequency effect above and beyond the word length effect. The formula of control model 1b is: 
-
-```{r }
-print(formula(lmm.k2))
-```
-
-Since the frequency measure and word length are both word-level predictors, we have no potential random slopes and report the model with a word random intercept only. The estimates of the fixed effects can be seen in table S18.
-
-```{r }
-summary(lmm.k2)$coef %>%
-  kable('html', digits = 2, caption = 'Table S18: Summary of fixed effects for control model 1b') %>% 
+m1.2 = lmer(c.rate ~ frequency.measure + word.length + (1 |language), data = d.k2, REML = F, lmerControl(optimizer = 'bobyqa'))
+# summary(m1.2)
+# print(formula(m1.2))
+summary(m1.2)$coef %>%
+  kable(format, digits = 2, caption = 'Table S18: Summary of fixed effects for control M2') %>% 
   kable_styling(full_width = FALSE)
 ```
 
-Then, the first control model provides us with aggregated information on the centralised log frequency per million of each kinship word. This allows direct comparison with the core vocabulary (where we only have one datum per word) without a considerable loss of information.
-
-The second control model only serves to demonstrate that the frequency effect is not an artefact of word length.
-
 ## Predictive model: rate of change and frequency of use
 
-In the predictive model, we use the word intercepts from control model 1 as measures of frequency of use for kin terms, and centralised log frequency per million for the Swadesh terms. We restrict the dataset to languages for which we have kin term data.
+>*Model 2.1:*
+>
+>Centralised rate of replacement ~ Frequency measure * Word type + (1 | Language)
 
-```{r}
+>*Model 2.2:*
+>
+>Centralised rate of replacement ~ Frequency measure * Word type + (Word type | Language)
+
+
+The predictive model (M2) uses the random word-meaning intercepts (named Frequency measure) from M1.1 as measures of frequency of use for kin terms, and centralised log frequency per million for the Swadesh terms. We restrict the dataset to languages for which we have kin term data. We propose two possible random effect structures, either random intercepts for each language (M2.1), or random slopes for each word type in each language (M2.2. Word-type is the only fixed effect that can vary across language. Goodness-of-fit tests reveal that this random slope results in a better fit (Table S19), so we report M2.2, the model with the slope (Table S20). The interaction effect is plotted in figure S5. Figure S6 shows a plot of the raw data used in the model, highlighting the kinship terms. 
+
+```{r M3}
 d.sw = d %>% filter(word.type == 'swadesh.word')
 d.sw$frequency.measure = d.sw$clfpm
 d.sw$word.length = NA
@@ -435,47 +438,29 @@ d.sw2 = d.sw %>% select(word,language,meaning,c.rate,word.type,frequency.measure
 d2 = rbind(d.k2,d.sw2)
 
 # write.csv(d2, 'data/supplementary_data_processed.csv', row.names = F)
-d2$word.type = as.factor(d2$word.type)
 
-lmm.all1 = lmer(c.rate ~ frequency.measure * word.type + (word.type|language), data = d2, REML = F, lmerControl(optimizer = 'bobyqa'))
-lmm.all1b = lmer(c.rate ~ frequency.measure * word.type + (1|language), data = d2, REML = F, lmerControl(optimizer = 'bobyqa'))
+m2.1 = lmer(c.rate ~ frequency.measure * word.type + (word.type|language), data = d2, REML = F, lmerControl(optimizer = 'bobyqa'))
 
-```
-
-The formula of control model 1 is: 
-
-```{r }
-print(formula(lmm.all1))
-```
-
-The one fixed effect that can vary across language, the random effect, is word type. Goodness-of-fit tests reveal that this random slope results in a better fit, so we report the model with the slope:
-
-```{r warning=F}
-anova.object = anova(lmm.all1,lmm.all1b) %>% 
+m2.2 = lmer(c.rate ~ frequency.measure * word.type + (1|language), data = d2, REML = F, lmerControl(optimizer = 'bobyqa'))
+# summary(m2.1)
+# print(formula(m1.2))
+anova.object = anova(m2.1,m2.2) %>% 
   tidy
 names(anova.object) = names(anova.object)   
+anova.object$term = c("M3.2", "M3.1")
 anova.object %>% select(term, df, AIC, BIC, logLik, deviance) %>% 
-  kable()
+  kable(format, digits = 2, caption = "Table S19: Goodness for fit for model random effect structures") %>% 
+  kable_styling(full_width = FALSE)
 
-```
-
-The estimates of the fixed effects for the best fit of the predictive model can be seen below.
-
-```{r }
-# summary(lmm.all1)
-# print(formula(lmm.k2))
-summary(lmm.all1)$coef %>%
-  kable('html', digits = 2, caption = 'Table S19: Summary of fixed effects for predictive model') %>% 
+summary(m2.1)$coef %>%
+  kable(format, digits = 2, caption = 'Table S20: Summary of fixed effects for predictive model') %>% 
   kable_styling(full_width = FALSE)
 ```
 
-The effects plot of the interaction can be seen below:
 
-```{r fig.width = 8, fig.height = 8}
-plot(allEffects(lmm.all1), multiline = T, ci.style = 'band', lines=list(lty=c(1,2)), main = 'Figure S5: rate of change ~ freq : word type', xlab = 'adjusted log freq per mil, centralised', ylab = 'mean rate of change, centralised')
+```{r fig.width = 5, fig.height = 5}
+plot(allEffects(m2.1), multiline = T, ci.style = 'band', lines=list(lty=c(1,2)), main = 'Figure S5: rate of change ~ freq : word type', xlab = 'adjusted log freq per mil, centralised', ylab = 'mean rate of change, centralised')
 ```
-
-We also provide the plot of the data below for the reader's convenience.
 
 ```{r fig.width = 10, fig.height = 8}
 d2b = d2 %>% 
@@ -487,63 +472,7 @@ ggplot(d2b, aes(x = mean.frequency.measure, y = c.rate, colour = word.type, labe
   geom_label(data = d2b[d2b$word.type == 'kin.term',], aes(x = mean.frequency.measure, y = c.rate, label = meaning), colour = 'red') +
   xlab('frequency measure') + 
   ylab('rate of change') +
-  ggtitle('Figure S6: mean raw data correlation of rate of change and frequency measure in predictive model')
-
-```
-
-```{r echo=F, eval=F}
-# These are the plots in the paper
-
-# library(tidyverse)
-library(RColorBrewer)
-library(ggrepel)
-
-###########################################################
-# Rate of change x frequency
-###########################################################
-# - kin terms are labels
-# - swadesh terms are dots
-
-d3 = d2 %>% 
-  group_by(c.rate,meaning,word.type) %>% 
-  summarise(mean.frequency.measure = mean(frequency.measure))
-
-ggplot(d3, aes(x = mean.frequency.measure, y = c.rate, colour = word.type)) +
-  geom_smooth(method = 'lm', fullrange = T) +
-  geom_point(data = d3[d3$word.type == 'swadesh.word',], aes(x = mean.frequency.measure, y = c.rate), colour = 'grey') +
-  geom_label_repel(data = d3[d3$word.type == 'kin.term',], aes(x = mean.frequency.measure, y = c.rate, label = meaning), colour = 'red', box.padding = 0.15) +
-  xlim(-5,5) +
-  ylim(-5,5) +
-  scale_colour_manual(values = c('violetred2','grey'), labels = c("kin term", "swadesh word")) +
-  xlab('frequency of use (logged, centralised, scaled)') +
-  ylab('mean rate of replacement (centralised)') +
-  ggthemes::theme_tufte() + 
-  theme(legend.position = c(.9,.9), legend.title=element_blank())
-ggsave('figures/fig3.pdf', width = 5.5, height = 4)
-
-###########################################################
-# Frequency x kin term | language, ranked by rate of change
-###########################################################
-
-d3b = d2 %>%
-  filter(word.type == 'kin.term') %>% 
-  droplevels %>% 
-  arrange(c.rate) %>%
-  mutate(meaning2 = paste(as.character(meaning), ' (', as.character(round(c.rate,2)), ')', sep = '')) %>% 
-  mutate(meaning2 = factor(meaning2, unique(meaning2)))
-
-ggplot(d3b, aes(y = frequency.measure, x = meaning2, fill = meaning2)) + 
-  geom_violin() +
-  scale_fill_brewer(palette = 'Set3') +
-  theme(legend.position = 'none') +
-  coord_flip() +
-  xlab('meaning (sorted by centralised mean rate of replacement)') +
-  ylab('frequency of use (logged, centralised, scaled)') +
-  stat_summary(fun.y=mean, geom="point", shape=23, size=4) +
-  ggthemes::theme_tufte() +
-  theme(legend.position = 'none')
-ggsave('figures/fig2.pdf', width = 4, height = 4, device = cairo_pdf)
-
+  ggtitle('Figure S6: Mean raw data correlation of rate of change and frequency measure in predictive model')
 
 ```
 
